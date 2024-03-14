@@ -186,6 +186,7 @@ class Predateur(Animal):
         self.s_proie = None
 
         self.identified_prey = False
+        self.died = False
 
     def detecter(self, list_proies):
         ''' Essa função deve receber a lista de presas, verificar se alguma foi identificada
@@ -239,19 +240,21 @@ class Predateur(Animal):
         else:
             pass
 
-    def is_dead(self, prey, list_preys):
+    def is_dead(self, list_preys):
         '''Essa é para verificar se matou uma presa e muda o status do predador. Recebe a 
         presa específica, e vai receber também champ.proies para conseguir deletar uma 
         presa específcia depois que ela morrer.
         A condição de posições iguais tem que estar necessariamente antes de começar o
         código para poder fazer esass coisas.'''
-        if prey != None:
-            if self.position[0] == prey.position[0] and self.position[1] == prey.position[1]:
-                if prey in list_preys:
-                    list_preys.remove(prey)
+        if self.s_proie != None:
+            if self.position[0] == self.s_proie.position[0] and self.position[1] == self.s_proie.position[1]:
+                if self.s_proie in list_preys:
+                    list_preys.remove(self.s_proie)
                 self.is_satiated = True
                 self.without_meat = 0
                 self.identified_prey = False
+                self.s_proie = None
+
         else:
             pass
 
@@ -265,9 +268,8 @@ class Predateur(Animal):
         pass
 
     def update_state(self, champ):
-        self.without_meat += 1  # Incrementa a contagem de dias sem comer
+        self.without_meat += 1
         if self.without_meat >= 25:
-            # O predador morre se estiver sem comida por 25 dias
             self.death(champ)
         elif self.without_meat > 2:
             if self.identified_prey == False:
@@ -275,7 +277,7 @@ class Predateur(Animal):
 
             self.hunt(self.s_proie, champ)  # Caça a presa identificada
             # Verifica se conseguiu matar a presa
-            self.is_dead(self.s_proie, champ.proies)
+            self.is_dead(champ.proies)
         else:
             pass  # O predador fica parado se não estiver com fome
 
@@ -337,6 +339,7 @@ class Champ:
             predateur.update_state(self)
         for proies in self.proies:
             proies.update_state(self)
+
         self.turn += 1
 
 # ================================Implementation ====================================
@@ -403,11 +406,12 @@ class GameBoard(tk.Tk):
                                      (x + 1) * self.cell_size, (y + 1) * self.cell_size, fill=color)
 
     def update(self):
+        # print(self.champ.predateurs[0].without_meat)
         self.champ.process_turn()  # Processa um turno do jogo
         self.place_objects()  # Atualiza a visualização com os novos estados
         self.label_turn.config(text=f"Turno:{self.champ.turn}")
         # Aguarda 1000ms (1 segundo) e chama update novamente
-        self.after(500, self.update)
+        self.after(100, self.update)
 
 
 # ======================= Add Predateurs et Proies ================================
